@@ -1,74 +1,77 @@
 const express = require('express');
+const router = express.Router();
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs'); // Asegúrate de tener bcryptjs instalado
 const User = require('../models/User');
 const config = require('../config');
 
-const router = express.Router();
-
+// REGISTRO
 router.post('/register', async (req, res) => {
     try {
-        const { email, password, role } = req.body;
+        const { email, password } = req.body;
 
+        // Validación básica
         if (!email || !password) {
-            return res.status(400).send('Email y contraseña son requeridos');
+            return res.status(400).json({ message: 'Email y contraseña son obligatorios' });
         }
 
+        // Verificar si ya existe
         const existingUser = await User.findOne({ email });
         if (existingUser) {
-            return res.status(400).send('El email ya está en uso');
+            return res.status(400).json({ message: 'El email ya está registrado' });
         }
-        
-        const user = new User({ 
-            email, 
-            password,
-            role: role === 'admin' ? 'admin' : 'user'
-        });
-        
-        await user.save();
-        
-        res.status(201).send('Usuario registrado con éxito');
 
+        // Generar username automático si no viene (ej: iker@test.com -> iker)
+        // Esto evita el error de validación de tu modelo antiguo
+        const username = email.split('@')[0];
+
+        // Encriptar contraseña
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const newUser = new User({
+            username, 
+            email,
+            password: hashedPassword,
+            role: 'user' // Por defecto siempre es usuario normal
+        });
+
+        await newUser.save();
+
+        res.status(201).json({ message: 'Usuario registrado correctamente' });
     } catch (error) {
-        console.error(error);
-        res.status(500).send('Error al registrar usuario: ' + error.message);
+        console.error("Error en registro:", error);
+        res.status(500).json({ message: 'Error al registrar usuario: ' + error.message });
     }
 });
 
+// LOGIN
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
 
+        // Buscar usuario
         const user = await User.findOne({ email });
         if (!user) {
-            return res.status(401).send('Credenciales inválidas (Email)');
+            return res.status(401).json({ message: 'Credenciales inválidas' });
         }
 
-        const isMatch = await user.comparePassword(password);
+        // Comparar contraseña
+        const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(401).send('Credenciales inválidas (Contraseña)');
+            return res.status(401).json({ message: 'Credenciales inválidas' });
         }
 
-        const payload = {
-            userId: user._id,
-            email: user.email,
-            role: user.role
-        };
-
+        // Crear Token
         const token = jwt.sign(
-            payload,
+            { userId: user._id, email: user.email, role: user.role },
             config.JWT_SECRET,
-            { expiresIn: '2h' }
+            { expiresIn: '24h' }
         );
 
-        res.json({ 
-            message: "Login exitoso",
-            token: token,
-            user: payload
-        });
-        
+        res.json({ token, user: { email: user.email, role: user.role } });
     } catch (error) {
-        console.error(error);
-        res.status(500).send('Error en el servidor durante el login');
+        console.error("Error en login:", error);
+        res.status(500).json({ message: 'Error en el servidor' });
     }
 });
 
