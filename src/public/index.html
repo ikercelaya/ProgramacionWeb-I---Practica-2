@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerce Final</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    
+    <nav>
+        <div class="logo"><i class="fas fa-store"></i> Portal Web</div>
+        <div class="nav-links">
+            <button onclick="showSection('products')">Catálogo</button>
+            <button onclick="showSection('cart')">Carrito (<span id="cartCount">0</span>)</button>
+            <button id="navAdminUsers" class="hidden" onclick="showSection('adminUsers')">Usuarios</button>
+            <button id="navAdminOrders" class="hidden" onclick="showSection('adminOrders')">Pedidos</button>
+            <button id="logoutBtn" class="hidden btn-danger" style="padding: 5px 10px;">Salir</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        
+        <div id="auth-section">
+            <div class="auth-box">
+                <h2 id="authTitle">Iniciar Sesión</h2>
+                <form id="authForm">
+                    <input type="email" id="email" placeholder="Email" required>
+                    <input type="password" id="password" placeholder="Contraseña" required>
+                    <button type="submit" class="btn-primary">Entrar</button>
+                </form>
+                <p id="toggleAuth" style="margin-top:15px; color:#3498db; cursor:pointer;">¿No tienes cuenta? Regístrate</p>
+            </div>
+        </div>
+
+        <div id="products-section" class="hidden section">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2>Catálogo</h2>
+                <button id="btnShowCreateProduct" class="hidden btn-success" onclick="prepareCreateMode()">+ Nuevo Producto</button>
+            </div>
+            
+            <form id="productForm" class="hidden auth-box" style="margin-bottom:30px; text-align:left;">
+                <h3 id="formTitle">Nuevo Producto</h3>
+                <input type="hidden" id="editProductId"> 
+                
+                <label>Nombre:</label>
+                <input type="text" id="productName" required>
+                <label>Descripción:</label>
+                <input type="text" id="productDescription" required>
+                
+                <div style="display:flex; gap:10px;">
+                    <input type="number" id="productPrice" placeholder="Precio" required step="0.01">
+                    <select id="productCategory">
+                        <option value="camisetas">Camisetas</option>
+                        <option value="pantalones">Pantalones</option>
+                        <option value="zapatos">Zapatos</option>
+                        <option value="accesorios">Accesorios</option>
+                    </select>
+                </div>
+                
+                <label>Imagen:</label>
+                <input type="file" id="productImage" accept="image/*">
+                <small id="imageHelp" style="color:gray; display:none;">(Deja vacío para mantener la actual)</small>
+                
+                <div style="margin-top:15px; display:flex; gap:10px;">
+                    <button type="submit" class="btn-primary" id="btnSaveProduct">Guardar</button>
+                    <button type="button" class="btn-secondary" onclick="hideProductForm()">Cancelar</button>
+                </div>
+            </form>
+
+            <div id="products-grid" class="grid"></div>
+        </div>
+
+        <div id="cart-section" class="hidden section">
+            <h2>Tu Carrito</h2>
+            <div id="cart-items"></div>
+            <div style="text-align:right; margin-top:20px;">
+                <h3>Total: <span id="cartTotal">0.00</span> €</h3>
+                <button onclick="checkout()" class="btn-success" style="margin-top:10px;">Finalizar Pedido</button>
+            </div>
+        </div>
+
+        <div id="adminUsers-section" class="hidden section">
+            <h2>Gestión de Usuarios</h2>
+            <button onclick="loadUsers()" class="btn-secondary">Actualizar</button>
+            <table style="margin-top:15px;">
+                <thead><tr><th>Email</th><th>Rol</th><th>Acciones</th></tr></thead>
+                <tbody id="usersTableBody"></tbody>
+            </table>
+        </div>
+
+        <div id="adminOrders-section" class="hidden section">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h2>Gestión de Pedidos</h2>
+                <div>
+                    <label>Filtrar por estado:</label>
+                    <select id="orderFilter" onchange="loadOrders()" style="width:auto; display:inline-block;">
+                        <option value="">Todos</option>
+                        <option value="Pending">Pendientes</option>
+                        <option value="Completed">Completados</option>
+                    </select>
+                </div>
+            </div>
+            <div id="ordersList" style="margin-top:15px;"></div>
+        </div>
+
+        <div id="chat-container" class="chat-collapsed"> <div id="chat-header" onclick="toggleChat()">
+                <span><i class="far fa-comments"></i> Chat Soporte</span>
+                <i class="fas fa-minus" id="chatIcon"></i>
+            </div>
+            <div id="chat-content">
+                <div id="chat-messages"></div>
+                <form id="chat-form">
+                    <input id="chat-input" autocomplete="off" placeholder="Escribe..." />
+                    <button type="submit"><i class="fas fa-paper-plane"></i></button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="client.js"></script>
+</body>
+</html>
